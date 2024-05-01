@@ -15,7 +15,10 @@ _repeated_sentence = "The grass is green. The sky is blue. The sun is yellow. He
 _len = len(_repeated_sentence)
 _repeated_sentence = _repeated_sentence * 1000
 
-def generate_passkey_dataset(n: int, x: int, lower: int = 0, upper: int = 10000) -> List[Tuple[str, str]]:
+
+def generate_passkey_dataset(
+    n: int, x: int, lower: int = 0, upper: int = 10000
+) -> List[Tuple[str, str]]:
     dataset = []
     for i in range(n):
         label = random.randint(lower, upper)
@@ -23,6 +26,7 @@ def generate_passkey_dataset(n: int, x: int, lower: int = 0, upper: int = 10000)
         text = f"{_starting_sentence} {_repeated_sentence[: _len * x // 2]}{_passkey_sentence.format(label, label)} {_repeated_sentence[: _len * (x - x // 2)]}{_end_sentence}"
         dataset.append((text, label))
     return dataset
+
 
 dataset = generate_passkey_dataset(3, 100)
 for x, y in dataset:
