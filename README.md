@@ -6,7 +6,7 @@ Possibly faithful implementation of the "Leave No Context Behind: Efficient Infi
 
 I've been trying to practice implementing papers related to new model architectures for the past few months, in the hope to become more confident with large codebases and new ideas.
 
-I've recorded myself walking through the paper and implementing it in a two hour programming stream on [YouTube](https://github.com/a-r-r-o-w/infini-attention/). For a great explanation on InfiniAttention, watch [this](https://youtu.be/r_UBBfTPcF0) video by Yannic Kilcher and [this](https://youtu.be/MRTTGMlKgb8) video by Gabriel Mongaras.
+I've recorded myself walking through the paper and implementing it in a two hour programming stream on [YouTube](https://youtu.be/SLrSJSL4pdk). For a great explanation on InfiniAttention, watch [this](https://youtu.be/r_UBBfTPcF0) video by Yannic Kilcher and [this](https://youtu.be/MRTTGMlKgb8) video by Gabriel Mongaras.
 
 ### TLDR
 
