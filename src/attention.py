@@ -137,9 +137,12 @@ class InfiniAttention(nn.Module):
         self.v_proj = nn.Linear(embedding_dim, value_dim, bias=use_value_bias)
         self.attn = ScaledDotProductAttention(query_key_dim)
         self.linear = nn.Linear(value_dim, embedding_dim, bias=use_output_bias)
-        self.beta = nn.Parameter(torch.randn(1))
         self.elu = nn.ELU()
         self.sigmoid = nn.Sigmoid()
+
+        # beta is used in long-term context injection for each attention head
+        # [b? n 1 1] x [b n s v] => [b n s v]
+        self.beta = nn.Parameter(torch.randn((num_heads, 1, 1)))
 
         # key: [batch_size, num_heads, seq_length, query_key_dim_per_head]
         # key_T: [batch_size, num_heads, query_key_dim_per_head, seq_length]
