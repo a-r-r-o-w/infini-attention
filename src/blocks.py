@@ -10,15 +10,17 @@ T = torch.FloatTensor
 
 
 class PositionwiseFFN(nn.Module):
-    def __init__(self, embedding_dim: int, hidden_dim: int) -> None:
+    def __init__(
+        self, embedding_dim: int, hidden_dim: int, use_pffn_bias: bool = True
+    ) -> None:
         super().__init__()
 
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
 
-        self.linear1 = nn.Linear(embedding_dim, hidden_dim)
+        self.linear1 = nn.Linear(embedding_dim, hidden_dim, bias=use_pffn_bias)
         self.activation = nn.ReLU()
-        self.linear2 = nn.Linear(hidden_dim, embedding_dim)
+        self.linear2 = nn.Linear(hidden_dim, embedding_dim, bias=use_pffn_bias)
 
     def forward(self, x: T) -> T:
         x = self.linear1(x)
@@ -36,14 +38,28 @@ class EncoderBlock(nn.Module):
         num_heads: int,
         ffn_dim: int,
         dropout_rate: float,
+        use_query_bias: bool = False,
+        use_key_bias: bool = False,
+        use_value_bias: bool = False,
+        use_output_bias: bool = False,
+        use_pffn_bias: bool = True,
     ) -> None:
         super().__init__()
 
-        self.attn = InfiniAttention(embedding_dim, query_key_dim, value_dim, num_heads)
+        self.attn = InfiniAttention(
+            embedding_dim,
+            query_key_dim,
+            value_dim,
+            num_heads,
+            use_query_bias,
+            use_key_bias,
+            use_value_bias,
+            use_output_bias,
+        )
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.norm1 = nn.LayerNorm(embedding_dim)
 
-        self.pffn = PositionwiseFFN(embedding_dim, ffn_dim)
+        self.pffn = PositionwiseFFN(embedding_dim, ffn_dim, use_pffn_bias)
         self.dropout2 = nn.Dropout(p=dropout_rate)
         self.norm2 = nn.LayerNorm(embedding_dim)
 
@@ -68,18 +84,41 @@ class DecoderBlock(nn.Module):
         num_heads: int,
         ffn_dim: int,
         dropout_rate: float,
+        use_query_bias: bool = False,
+        use_key_bias: bool = False,
+        use_value_bias: bool = False,
+        use_output_bias: bool = False,
+        use_pffn_bias: bool = True,
     ) -> None:
         super().__init__()
 
-        self.attn1 = InfiniAttention(embedding_dim, query_key_dim, value_dim, num_heads)
+        self.attn1 = InfiniAttention(
+            embedding_dim,
+            query_key_dim,
+            value_dim,
+            num_heads,
+            use_query_bias,
+            use_key_bias,
+            use_value_bias,
+            use_output_bias,
+        )
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.norm1 = nn.LayerNorm(embedding_dim)
 
-        self.attn2 = InfiniAttention(embedding_dim, query_key_dim, value_dim, num_heads)
+        self.attn2 = InfiniAttention(
+            embedding_dim,
+            query_key_dim,
+            value_dim,
+            num_heads,
+            use_query_bias,
+            use_key_bias,
+            use_value_bias,
+            use_output_bias,
+        )
         self.dropout2 = nn.Dropout(p=dropout_rate)
         self.norm2 = nn.LayerNorm(embedding_dim)
 
-        self.pffn = PositionwiseFFN(embedding_dim, ffn_dim)
+        self.pffn = PositionwiseFFN(embedding_dim, ffn_dim, use_pffn_bias)
         self.dropout3 = nn.Dropout(p=dropout_rate)
         self.norm3 = nn.LayerNorm(embedding_dim)
 

@@ -24,6 +24,11 @@ class EncoderDecoderTransformer(nn.Module):
         num_heads: int,
         ffn_dim: int,
         dropout_rate: float,
+        use_query_bias: bool = False,
+        use_key_bias: bool = False,
+        use_value_bias: bool = False,
+        use_output_bias: bool = False,
+        use_pffn_bias: bool = True,
     ) -> None:
         super().__init__()
 
@@ -42,6 +47,11 @@ class EncoderDecoderTransformer(nn.Module):
                     num_heads,
                     ffn_dim,
                     dropout_rate,
+                    use_query_bias,
+                    use_key_bias,
+                    use_value_bias,
+                    use_output_bias,
+                    use_pffn_bias,
                 )
                 for _ in range(num_enc_layers)
             ]
@@ -55,6 +65,11 @@ class EncoderDecoderTransformer(nn.Module):
                     num_heads,
                     ffn_dim,
                     dropout_rate,
+                    use_query_bias,
+                    use_key_bias,
+                    use_value_bias,
+                    use_output_bias,
+                    use_pffn_bias,
                 )
                 for _ in range(num_dec_layers)
             ]
