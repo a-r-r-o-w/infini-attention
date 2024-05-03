@@ -45,7 +45,15 @@ class ScaledDotProductAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     def __init__(
-        self, embedding_dim: int, query_key_dim: int, value_dim: int, num_heads: int
+        self,
+        embedding_dim: int,
+        query_key_dim: int,
+        value_dim: int,
+        num_heads: int,
+        use_query_bias: bool = False,
+        use_key_bias: bool = False,
+        use_value_bias: bool = False,
+        use_output_bias: bool = False,
     ) -> None:
         super().__init__()
 
@@ -59,11 +67,11 @@ class MultiHeadAttention(nn.Module):
         assert self.query_key_dim_per_head * num_heads == query_key_dim
         assert self.value_dim_per_head * num_heads == value_dim
 
-        self.q_proj = nn.Linear(embedding_dim, query_key_dim)
-        self.k_proj = nn.Linear(embedding_dim, query_key_dim)
-        self.v_proj = nn.Linear(embedding_dim, value_dim)
+        self.q_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_query_bias)
+        self.k_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_key_bias)
+        self.v_proj = nn.Linear(embedding_dim, value_dim, bias=use_value_bias)
         self.attn = ScaledDotProductAttention(query_key_dim)
-        self.linear = nn.Linear(value_dim, embedding_dim)
+        self.linear = nn.Linear(value_dim, embedding_dim, bias=use_output_bias)
 
     def forward(self, query: T, key: T, value: T, mask: Optional[T] = None) -> T:
         # 1. Projection
@@ -102,7 +110,15 @@ class MultiHeadAttention(nn.Module):
 
 class InfiniAttention(nn.Module):
     def __init__(
-        self, embedding_dim: int, query_key_dim: int, value_dim: int, num_heads: int
+        self,
+        embedding_dim: int,
+        query_key_dim: int,
+        value_dim: int,
+        num_heads: int,
+        use_query_bias: bool = False,
+        use_key_bias: bool = False,
+        use_value_bias: bool = False,
+        use_output_bias: bool = False,
     ) -> None:
         super().__init__()
 
@@ -116,14 +132,17 @@ class InfiniAttention(nn.Module):
         assert self.query_key_dim_per_head * num_heads == query_key_dim
         assert self.value_dim_per_head * num_heads == value_dim
 
-        self.q_proj = nn.Linear(embedding_dim, query_key_dim)
-        self.k_proj = nn.Linear(embedding_dim, query_key_dim)
-        self.v_proj = nn.Linear(embedding_dim, value_dim)
+        self.q_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_query_bias)
+        self.k_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_key_bias)
+        self.v_proj = nn.Linear(embedding_dim, value_dim, bias=use_value_bias)
         self.attn = ScaledDotProductAttention(query_key_dim)
-        self.linear = nn.Linear(value_dim, embedding_dim)
-        self.beta = nn.Parameter(torch.randn(1))
+        self.linear = nn.Linear(value_dim, embedding_dim, bias=use_output_bias)
         self.elu = nn.ELU()
         self.sigmoid = nn.Sigmoid()
+
+        # beta is used in long-term context injection for each attention head
+        # [b? n 1 1] x [b n s v] => [b n s v]
+        self.beta = nn.Parameter(torch.randn((num_heads, 1, 1)))
 
         # key: [batch_size, num_heads, seq_length, query_key_dim_per_head]
         # key_T: [batch_size, num_heads, query_key_dim_per_head, seq_length]
