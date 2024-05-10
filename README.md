@@ -4,8 +4,6 @@ Possibly faithful implementation of the "Leave No Context Behind: Efficient Infi
 
 - Paper: https://arxiv.org/abs/2404.07143
 
-I've been trying to practice implementing papers related to new model architectures for the past few months, in the hope to become more confident with large codebases and new ideas.
-
 I've recorded myself walking through the paper and implementing it in a two hour programming stream on [YouTube](https://youtu.be/SLrSJSL4pdk). For a great explanation on InfiniAttention, watch [this](https://youtu.be/r_UBBfTPcF0) video by Yannic Kilcher and [this](https://youtu.be/MRTTGMlKgb8) video by Gabriel Mongaras.
 
 ### TLDR
@@ -14,17 +12,57 @@ InfiniAttention is a method presented in the linked paper that proposes an effic
 
 TODO
 
+### Setup
+
+```bash
+git clone https://github.com/a-r-r-o-w/infini-attention
+cd infini-attention
+
+pip install -r requirements.txt
+pip install -e .
+python3 setup.py develop
+```
+
 ### Usage
 
-TODO
+```python
+import torch
+from infini_attention import EncoderDecoderTransformer
+
+model = EncoderDecoderTransformer(
+    num_enc_layers=3,
+    num_dec_layers=3,
+    src_vocab_size=5000,
+    tgt_vocab_size=5000,
+    src_pad_idx=1,
+    tgt_pad_idx=1,
+    max_length=10000,
+    embedding_dim=512,
+    query_key_dim=512,
+    value_dim=512,
+    num_heads=8,
+    ffn_dim=2048,
+    dropout_rate=0.1,
+    use_pffn_bias=True,
+)
+
+batch_size = 32
+seq_length = 1024
+src_ids = torch.randint(0, 5000, (batch_size, seq_length))
+tgt_ids = torch.randint(0, 5000, (batch_size, seq_length))
+
+print(model(src_ids, tgt_ids).shape) # (batch_size, seq_length, embedding_dim)
+```
 
 ### TODO
 
 - [ ] Verify if attention mechanism for memory is actually correctly implemented
-- [ ] Implement the training loop
+- [ ] Implement training loop and sequence segmentation
 - [ ] Implement passkey retrieval and other needle-in-a-haystack experiments
 - [ ] Improve documentation
-- [ ] Implement RoPE instead of current PE
+- [ ] Implement RoPE
+- [ ] Implement SwiGLU and other activation variants
+- [ ] Implement GQA
 - [ ] Add encoder/decoder-only variants
 
 ### Citations
