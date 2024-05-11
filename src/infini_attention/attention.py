@@ -5,6 +5,7 @@ import torch.nn as nn
 
 
 T = torch.Tensor
+EPSILON = 1e-9
 
 
 class ScaledDotProductAttention(nn.Module):
@@ -174,18 +175,18 @@ class InfiniAttention(nn.Module):
         # numerator: [b n_q s a] x [b? n_kv a a] => [b n??? s a]
         # denominotor: [b n_q s e] x [b? n_kv e 1] => [b n??? s 1]
         # TODO: n??? For now, num_query_heads must be equal to num_key_value_heads otherwise this will fail
-        A_mem = torch.matmul(elu_q, self.memory) / torch.matmul(
+        A_mem = torch.matmul(elu_q, self.memory) / (torch.matmul(
             elu_q, self.z.unsqueeze(dim=-1)
-        )
+        ) + EPSILON)
 
         # 2.2 Memory update
         elu_k: T = self.elu(k_proj) + 1
         elu_k_T = elu_k.transpose(2, 3)
 
         if self.use_delta_update_rule:
-            v_delta = torch.matmul(elu_k, self.memory) / torch.matmul(
+            v_delta = torch.matmul(elu_k, self.memory) / (torch.matmul(
                 elu_k, self.z.unsqueeze(dim=-1)
-            )
+            ) + EPSILON)
             v = v_proj - v_delta
         else:
             v = v_proj
