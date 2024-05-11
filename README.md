@@ -38,20 +38,23 @@ model = EncoderDecoderTransformer(
     tgt_pad_idx=1,
     max_length=10000,
     embedding_dim=512,
-    query_key_dim=512,
-    value_dim=512,
-    num_heads=8,
+    attn_head_dim=512,
+    num_query_heads=8,
+    num_key_value_heads=8,
     ffn_dim=2048,
     dropout_rate=0.1,
     use_pffn_bias=True,
-)
+).to("cuda")
 
 batch_size = 32
 seq_length = 1024
-src_ids = torch.randint(0, 5000, (batch_size, seq_length))
-tgt_ids = torch.randint(0, 5000, (batch_size, seq_length))
+src_ids = torch.randint(0, 5000, (batch_size, seq_length), device="cuda")
+tgt_ids = torch.randint(0, 5000, (batch_size, seq_length), device="cuda")
 
-print(model(src_ids, tgt_ids).shape) # (batch_size, seq_length, embedding_dim)
+output, enc_context, dec_context = model(src_ids, tgt_ids)
+print(sum(p.numel() for p in model.parameters() if p.requires_grad))  # 93231176
+print(output.shape)  # (batch_size, seq_length, embedding_dim)
+
 ```
 
 ### TODO

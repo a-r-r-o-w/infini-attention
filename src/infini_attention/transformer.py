@@ -19,14 +19,11 @@ class EncoderDecoderTransformer(nn.Module):
         tgt_pad_idx: int,
         max_length: int,
         embedding_dim: int,
-        query_key_dim: int,
-        value_dim: int,
-        num_heads: int,
+        attn_head_dim: int,
+        num_query_heads: int,
+        num_key_value_heads: int,
         ffn_dim: int,
         dropout_rate: float,
-        use_query_bias: bool = False,
-        use_key_bias: bool = False,
-        use_value_bias: bool = False,
         use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
@@ -42,14 +39,11 @@ class EncoderDecoderTransformer(nn.Module):
             [
                 EncoderBlock(
                     embedding_dim,
-                    query_key_dim,
-                    value_dim,
-                    num_heads,
+                    attn_head_dim,
+                    num_query_heads,
+                    num_key_value_heads,
                     ffn_dim,
                     dropout_rate,
-                    use_query_bias,
-                    use_key_bias,
-                    use_value_bias,
                     use_attn_linear_bias,
                     use_pffn_bias,
                 )
@@ -60,14 +54,11 @@ class EncoderDecoderTransformer(nn.Module):
             [
                 DecoderBlock(
                     embedding_dim,
-                    query_key_dim,
-                    value_dim,
-                    num_heads,
+                    attn_head_dim,
+                    num_query_heads,
+                    num_key_value_heads,
                     ffn_dim,
                     dropout_rate,
-                    use_query_bias,
-                    use_key_bias,
-                    use_value_bias,
                     use_attn_linear_bias,
                     use_pffn_bias,
                 )
@@ -75,7 +66,7 @@ class EncoderDecoderTransformer(nn.Module):
             ]
         )
 
-        self.scale = torch.sqrt(torch.tensor(embedding_dim))
+        self.scale = embedding_dim**0.5
 
     def _get_attn_mask(self, x: T, pad_idx: int) -> torch.BoolTensor:
         # [batch_size, seq_length] -> [batch_size, 1, 1, seq_length]
@@ -89,7 +80,9 @@ class EncoderDecoderTransformer(nn.Module):
         # [1 1 1 1]
         batch_size, seq_length = x.shape
         attn_mask = self._get_attn_mask(x, pad_idx)
-        causal_mask = torch.tril(torch.ones((1, seq_length, seq_length))).bool()
+        causal_mask = torch.tril(
+            torch.ones((1, seq_length, seq_length), device=x.device)
+        ).bool()
         mask = attn_mask & causal_mask
         return mask
 

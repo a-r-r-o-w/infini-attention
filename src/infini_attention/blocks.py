@@ -33,14 +33,11 @@ class EncoderBlock(nn.Module):
     def __init__(
         self,
         embedding_dim: int,
-        query_key_dim: int,
-        value_dim: int,
-        num_heads: int,
+        attn_head_dim: int,
+        num_query_heads: int,
+        num_key_value_heads: int,
         ffn_dim: int,
         dropout_rate: float,
-        use_query_bias: bool = False,
-        use_key_bias: bool = False,
-        use_value_bias: bool = False,
         use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
@@ -48,12 +45,9 @@ class EncoderBlock(nn.Module):
 
         self.attn = InfiniAttention(
             embedding_dim,
-            query_key_dim,
-            value_dim,
-            num_heads,
-            use_query_bias,
-            use_key_bias,
-            use_value_bias,
+            attn_head_dim,
+            num_query_heads,
+            num_key_value_heads,
             use_attn_linear_bias,
         )
         self.dropout1 = nn.Dropout(p=dropout_rate)
@@ -65,23 +59,23 @@ class EncoderBlock(nn.Module):
 
     def forward(self, x: T, mask: Optional[T] = None) -> T:
         residual = x
-        x = self.dropout1(self.attn(x, x, x, mask))
-        x = self.norm1(residual + x)
+        x, context = self.attn(x, x, x, mask)
+        x = self.norm1(residual + self.dropout1(x))
 
         residual = x
         x = self.dropout2(self.pffn(x))
         x = self.norm2(residual + x)
 
-        return x
+        return x, context
 
 
 class DecoderBlock(nn.Module):
     def __init__(
         self,
         embedding_dim: int,
-        query_key_dim: int,
-        value_dim: int,
-        num_heads: int,
+        attn_head_dim: int,
+        num_query_heads: int,
+        num_key_value_heads: int,
         ffn_dim: int,
         dropout_rate: float,
         use_attn_linear_bias: bool = False,
@@ -91,9 +85,9 @@ class DecoderBlock(nn.Module):
 
         self.attn1 = InfiniAttention(
             embedding_dim,
-            query_key_dim,
-            value_dim,
-            num_heads,
+            attn_head_dim,
+            num_query_heads,
+            num_key_value_heads,
             use_attn_linear_bias,
         )
         self.dropout1 = nn.Dropout(p=dropout_rate)
@@ -101,9 +95,9 @@ class DecoderBlock(nn.Module):
 
         self.attn2 = InfiniAttention(
             embedding_dim,
-            query_key_dim,
-            value_dim,
-            num_heads,
+            attn_head_dim,
+            num_query_heads,
+            num_key_value_heads,
             use_attn_linear_bias,
         )
         self.dropout2 = nn.Dropout(p=dropout_rate)
@@ -117,15 +111,15 @@ class DecoderBlock(nn.Module):
         self, x: T, enc_x: T, mask: Optional[T] = None, dec_enc_mask: Optional[T] = None
     ) -> T:
         residual = x
-        x = self.dropout1(self.attn1(x, x, x, mask))
-        x = self.norm1(residual + x)
+        x, context_self_attn = self.attn1(x, x, x, mask)
+        x = self.norm1(residual + self.dropout1(x))
 
         residual = x
-        x = self.dropout2(self.attn2(x, enc_x, enc_x, dec_enc_mask))
-        x = self.norm2(residual + x)
+        x, context_enc_dec_attn = self.attn2(x, enc_x, enc_x, dec_enc_mask)
+        x = self.norm2(residual + self.dropout2(x))
 
         residual = x
         x = self.dropout3(self.pffn(x))
         x = self.norm3(residual + x)
 
-        return x
+        return x, (context_self_attn, context_enc_dec_attn)
