@@ -32,7 +32,7 @@ class ScaledDotProductAttention(nn.Module):
 
         # 3. Mask
         if mask is not None:
-            x = x.masked_fill(mask == False, value=1e-9)
+            x = x.masked_fill(mask == False, value=-1e9)
 
         # 4. Softmax
         x = self.softmax(x)
