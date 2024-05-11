@@ -52,10 +52,7 @@ class MultiHeadAttention(nn.Module):
         query_key_dim: int,
         value_dim: int,
         num_heads: int,
-        use_query_bias: bool = False,
-        use_key_bias: bool = False,
-        use_value_bias: bool = False,
-        use_output_bias: bool = False,
+        use_attn_linear_bias: bool = False,
     ) -> None:
         super().__init__()
 
@@ -69,11 +66,11 @@ class MultiHeadAttention(nn.Module):
         assert self.query_key_dim_per_head * num_heads == query_key_dim
         assert self.value_dim_per_head * num_heads == value_dim
 
-        self.q_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_query_bias)
-        self.k_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_key_bias)
-        self.v_proj = nn.Linear(embedding_dim, value_dim, bias=use_value_bias)
+        self.q_proj = nn.Linear(embedding_dim, query_key_dim, bias=False)
+        self.k_proj = nn.Linear(embedding_dim, query_key_dim, bias=False)
+        self.v_proj = nn.Linear(embedding_dim, value_dim, bias=False)
         self.attn = ScaledDotProductAttention(query_key_dim)
-        self.linear = nn.Linear(value_dim, embedding_dim, bias=use_output_bias)
+        self.linear = nn.Linear(value_dim, embedding_dim, bias=use_attn_linear_bias)
 
     def forward(self, query: T, key: T, value: T, mask: Optional[T] = None) -> T:
         # 1. Projection
@@ -117,10 +114,7 @@ class InfiniAttention(nn.Module):
         query_key_dim: int,
         value_dim: int,
         num_heads: int,
-        use_query_bias: bool = False,
-        use_key_bias: bool = False,
-        use_value_bias: bool = False,
-        use_output_bias: bool = False,
+        use_attn_linear_bias: bool = False,
     ) -> None:
         super().__init__()
 
@@ -134,11 +128,11 @@ class InfiniAttention(nn.Module):
         assert self.query_key_dim_per_head * num_heads == query_key_dim
         assert self.value_dim_per_head * num_heads == value_dim
 
-        self.q_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_query_bias)
-        self.k_proj = nn.Linear(embedding_dim, query_key_dim, bias=use_key_bias)
-        self.v_proj = nn.Linear(embedding_dim, value_dim, bias=use_value_bias)
+        self.q_proj = nn.Linear(embedding_dim, query_key_dim, bias=False)
+        self.k_proj = nn.Linear(embedding_dim, query_key_dim, bias=False)
+        self.v_proj = nn.Linear(embedding_dim, value_dim, bias=False)
         self.attn = ScaledDotProductAttention(query_key_dim)
-        self.linear = nn.Linear(value_dim, embedding_dim, bias=use_output_bias)
+        self.linear = nn.Linear(value_dim, embedding_dim, bias=use_attn_linear_bias)
         self.elu = nn.ELU()
         self.sigmoid = nn.Sigmoid()
 

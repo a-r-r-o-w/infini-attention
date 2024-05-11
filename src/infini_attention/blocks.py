@@ -41,7 +41,7 @@ class EncoderBlock(nn.Module):
         use_query_bias: bool = False,
         use_key_bias: bool = False,
         use_value_bias: bool = False,
-        use_output_bias: bool = False,
+        use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
         super().__init__()
@@ -54,7 +54,7 @@ class EncoderBlock(nn.Module):
             use_query_bias,
             use_key_bias,
             use_value_bias,
-            use_output_bias,
+            use_attn_linear_bias,
         )
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.norm1 = nn.LayerNorm(embedding_dim)
@@ -84,10 +84,7 @@ class DecoderBlock(nn.Module):
         num_heads: int,
         ffn_dim: int,
         dropout_rate: float,
-        use_query_bias: bool = False,
-        use_key_bias: bool = False,
-        use_value_bias: bool = False,
-        use_output_bias: bool = False,
+        use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
         super().__init__()
@@ -97,10 +94,7 @@ class DecoderBlock(nn.Module):
             query_key_dim,
             value_dim,
             num_heads,
-            use_query_bias,
-            use_key_bias,
-            use_value_bias,
-            use_output_bias,
+            use_attn_linear_bias,
         )
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.norm1 = nn.LayerNorm(embedding_dim)
@@ -110,10 +104,7 @@ class DecoderBlock(nn.Module):
             query_key_dim,
             value_dim,
             num_heads,
-            use_query_bias,
-            use_key_bias,
-            use_value_bias,
-            use_output_bias,
+            use_attn_linear_bias,
         )
         self.dropout2 = nn.Dropout(p=dropout_rate)
         self.norm2 = nn.LayerNorm(embedding_dim)
@@ -138,18 +129,3 @@ class DecoderBlock(nn.Module):
         x = self.norm3(residual + x)
 
         return x
-
-
-if __name__ == "__main__":
-    embedding_dim = 512
-    query_key_dim = 512
-    value_dim = 512
-    num_heads = 8
-    ffn_dim = 768
-    dropout_rate = 0.1
-
-    encoder = EncoderBlock(
-        embedding_dim, query_key_dim, value_dim, num_heads, ffn_dim, dropout_rate
-    )
-    x = torch.randn((1, 128, embedding_dim))
-    print(encoder(x).shape)

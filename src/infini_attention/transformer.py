@@ -27,7 +27,7 @@ class EncoderDecoderTransformer(nn.Module):
         use_query_bias: bool = False,
         use_key_bias: bool = False,
         use_value_bias: bool = False,
-        use_output_bias: bool = False,
+        use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
         super().__init__()
@@ -50,7 +50,7 @@ class EncoderDecoderTransformer(nn.Module):
                     use_query_bias,
                     use_key_bias,
                     use_value_bias,
-                    use_output_bias,
+                    use_attn_linear_bias,
                     use_pffn_bias,
                 )
                 for _ in range(num_enc_layers)
@@ -68,7 +68,7 @@ class EncoderDecoderTransformer(nn.Module):
                     use_query_bias,
                     use_key_bias,
                     use_value_bias,
-                    use_output_bias,
+                    use_attn_linear_bias,
                     use_pffn_bias,
                 )
                 for _ in range(num_dec_layers)
