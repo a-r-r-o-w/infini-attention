@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 
-T = torch.FloatTensor
+T = torch.Tensor
 
 
 class ScaledDotProductAttention(nn.Module):
@@ -35,12 +35,12 @@ class ScaledDotProductAttention(nn.Module):
             x = x.masked_fill(mask == False, value=-1e9)
 
         # 4. Softmax
-        x = self.softmax(x)
+        context = self.softmax(x)
 
         # 5. Matmul
-        x = torch.matmul(x, value)  # [batch_size, num_heads, seq_length, value_dim]
+        x = torch.matmul(context, value)  # [batch_size, num_heads, seq_length, value_dim]
 
-        return x
+        return x, context
 
 
 class MultiHeadAttention(nn.Module):
@@ -96,7 +96,7 @@ class MultiHeadAttention(nn.Module):
         v_proj = v_proj.transpose(1, 2)
 
         # 3. SDPA
-        x: T = self.attn(q_proj, k_proj, v_proj, mask)
+        x, context = self.attn(q_proj, k_proj, v_proj, mask)
 
         # 4. Concat
         x = x.transpose(1, 2).contiguous()
@@ -105,7 +105,7 @@ class MultiHeadAttention(nn.Module):
         # 5. Linear
         x = self.linear(x)
 
-        return x
+        return x, context
 
 
 class InfiniAttention(nn.Module):
@@ -195,7 +195,7 @@ class InfiniAttention(nn.Module):
         # TODO: Implement delta rule
 
         # 3. SDPA
-        A_dot: T = self.attn(q_proj, k_proj, v_proj, mask)
+        A_dot, context = self.attn(q_proj, k_proj, v_proj, mask)
 
         # 3.1 Long-term context injection
         beta = self.sigmoid(self.beta)
@@ -208,4 +208,4 @@ class InfiniAttention(nn.Module):
         # 5. Linear
         x = self.linear(x)
 
-        return x
+        return x, context

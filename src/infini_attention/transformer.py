@@ -5,7 +5,7 @@ from .positional_encoding import PositionalEncoding
 from .blocks import DecoderBlock, EncoderBlock
 
 
-T = torch.FloatTensor
+T = torch.Tensor
 
 
 class EncoderDecoderTransformer(nn.Module):
@@ -106,15 +106,20 @@ class EncoderDecoderTransformer(nn.Module):
         src = self.pe(src)
         tgt = self.pe(tgt)
 
+
         # 3. Encoder
+        encoder_contexts = []
         for block in self.encoders:
-            src = block(src, attn_mask)
+            src, encoder_context = block(src, attn_mask)
+            encoder_contexts.append(encoder_context)
 
         # 4. Decoder
+        decoder_contexts = []
         for block in self.decoders:
-            tgt = block(tgt, src, causal_mask, attn_mask)
+            tgt, decoder_context = block(tgt, src, causal_mask, attn_mask)
+            decoder_contexts.append(decoder_context)
 
-        return tgt
+        return tgt, encoder_contexts, decoder_contexts
 
     def clear_memory(self) -> None:
         for block in self.encoders:

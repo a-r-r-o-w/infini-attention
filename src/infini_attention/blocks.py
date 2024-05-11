@@ -6,7 +6,7 @@ import torch.nn as nn
 from .attention import InfiniAttention
 
 
-T = torch.FloatTensor
+T = torch.Tensor
 
 
 class PositionwiseFFN(nn.Module):
