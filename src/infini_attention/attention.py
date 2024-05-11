@@ -38,7 +38,9 @@ class ScaledDotProductAttention(nn.Module):
         context = self.softmax(x)
 
         # 5. Matmul
-        x = torch.matmul(context, value)  # [batch_size, num_heads, seq_length, value_dim]
+        x = torch.matmul(
+            context, value
+        )  # [batch_size, num_heads, seq_length, value_dim]
 
         return x, context
 

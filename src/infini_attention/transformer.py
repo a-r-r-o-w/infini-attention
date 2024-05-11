@@ -106,7 +106,6 @@ class EncoderDecoderTransformer(nn.Module):
         src = self.pe(src)
         tgt = self.pe(tgt)
 
-
         # 3. Encoder
         encoder_contexts = []
         for block in self.encoders:
