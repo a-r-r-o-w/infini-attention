@@ -209,16 +209,3 @@ class InfiniAttention(nn.Module):
         x = self.linear(x)
 
         return x
-
-
-if __name__ == "__main__":
-    embedding_dim = 512
-    query_key_dim = 512
-    value_dim = 512
-    num_heads = 8
-
-    # mha = MultiHeadAttention(embedding_dim, query_key_dim, value_dim, num_heads)
-    mha = InfiniAttention(embedding_dim, query_key_dim, value_dim, num_heads)
-    x = torch.randn((1, 128, embedding_dim))
-
-    print(mha(x, x, x).shape)

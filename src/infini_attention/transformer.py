@@ -128,24 +128,3 @@ class EncoderDecoderTransformer(nn.Module):
             block.attn1.z.zero_()
             block.attn2.memory.zero_()
             block.attn2.z.zero_()
-
-
-if __name__ == "__main__":
-    transformer = EncoderDecoderTransformer(
-        1, 1, 1000, 1000, 1, 1, 256, 64, 64, 64, 4, 128, 0.1
-    )
-    shape = (2, 128)
-    input_ids = torch.randint(0, 1000, shape)
-    tgt_ids = torch.randint(0, 1000, shape)
-
-    print(transformer(input_ids, tgt_ids).shape)
-
-    # for inputs, (targets_shifted or labels) in train dataloader:
-    #   optimizer zero grad
-    #   inputs_segmented, targets_segment = segment(inputs, targets, SEGMENT_LENGTH)
-    #   for (each segment in inputs_segment, target_segmented)
-    #       # run infiniattention
-    #       calculate loss per segment and backward
-    #   gradient clipping between 0 and 1
-    #   optimizer step
-    #   clear memory of infiniattention
