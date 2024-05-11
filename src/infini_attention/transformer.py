@@ -24,6 +24,7 @@ class EncoderDecoderTransformer(nn.Module):
         num_key_value_heads: int,
         ffn_dim: int,
         dropout_rate: float,
+        use_delta_update_rule: bool = False,
         use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
@@ -44,6 +45,7 @@ class EncoderDecoderTransformer(nn.Module):
                     num_key_value_heads,
                     ffn_dim,
                     dropout_rate,
+                    use_delta_update_rule,
                     use_attn_linear_bias,
                     use_pffn_bias,
                 )
@@ -59,6 +61,7 @@ class EncoderDecoderTransformer(nn.Module):
                     num_key_value_heads,
                     ffn_dim,
                     dropout_rate,
+                    use_delta_update_rule,
                     use_attn_linear_bias,
                     use_pffn_bias,
                 )

@@ -112,6 +112,7 @@ class InfiniAttention(nn.Module):
         num_query_heads: int,
         num_key_value_heads: int,
         use_attn_linear_bias: bool = False,
+        use_delta_update_rule: bool = False,
     ) -> None:
         super().__init__()
 
@@ -121,6 +122,7 @@ class InfiniAttention(nn.Module):
         self.key_value_dim = attn_head_dim * num_key_value_heads
         self.num_query_heads = num_query_heads
         self.num_key_value_heads = num_key_value_heads
+        self.use_delta_update_rule = use_delta_update_rule
 
         self.q_proj = nn.Linear(embedding_dim, self.query_dim, bias=False)
         self.k_proj = nn.Linear(embedding_dim, self.key_value_dim, bias=False)
@@ -180,9 +182,16 @@ class InfiniAttention(nn.Module):
         elu_k: T = self.elu(k_proj) + 1
         elu_k_T = elu_k.transpose(2, 3)
 
-        self.memory = self.memory + torch.matmul(elu_k_T, v_proj)
+        if self.use_delta_update_rule:
+            v_delta = torch.matmul(elu_k, self.memory) / torch.matmul(
+                elu_k, self.z.unsqueeze(dim=-1)
+            )
+            v = v_proj - v_delta
+        else:
+            v = v_proj
+
+        self.memory = self.memory + torch.matmul(elu_k_T, v)
         self.z = self.z + elu_k.sum(dim=2)
-        # TODO: Implement delta rule
 
         # 3. SDPA
         A_dot, context = self.attn(q_proj, k_proj, v_proj, mask)

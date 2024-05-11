@@ -38,6 +38,7 @@ class EncoderBlock(nn.Module):
         num_key_value_heads: int,
         ffn_dim: int,
         dropout_rate: float,
+        use_delta_update_rule: bool = False,
         use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
@@ -49,6 +50,7 @@ class EncoderBlock(nn.Module):
             num_query_heads,
             num_key_value_heads,
             use_attn_linear_bias,
+            use_delta_update_rule,
         )
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.norm1 = nn.LayerNorm(embedding_dim)
@@ -78,6 +80,7 @@ class DecoderBlock(nn.Module):
         num_key_value_heads: int,
         ffn_dim: int,
         dropout_rate: float,
+        use_delta_update_rule: bool = False,
         use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
@@ -89,6 +92,7 @@ class DecoderBlock(nn.Module):
             num_query_heads,
             num_key_value_heads,
             use_attn_linear_bias,
+            use_delta_update_rule,
         )
         self.dropout1 = nn.Dropout(p=dropout_rate)
         self.norm1 = nn.LayerNorm(embedding_dim)
@@ -99,6 +103,7 @@ class DecoderBlock(nn.Module):
             num_query_heads,
             num_key_value_heads,
             use_attn_linear_bias,
+            use_delta_update_rule,
         )
         self.dropout2 = nn.Dropout(p=dropout_rate)
         self.norm2 = nn.LayerNorm(embedding_dim)
