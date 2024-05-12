@@ -155,6 +155,8 @@ class EncoderDecoderTransformer(nn.Module):
         return tgt, encoder_contexts, decoder_contexts
 
     def clear_memory(self) -> None:
+        r"""Clears the InfiniAttention memory of the encoder and decoder blocks."""
+
         for block in self.encoders:
             block: EncoderBlock
             block.attn.memory.zero_()
