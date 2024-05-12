@@ -9,18 +9,25 @@ EPSILON = 1e-9
 
 
 class ScaledDotProductAttention(nn.Module):
-    def __init__(self, query_key_dim: int) -> None:
+    r"""Computes the scaled dot-product attention given query, key, value, and an optional mask.
+
+    Args:
+        attn_head_dim (int):
+            The dimension of each attention head used in the multi-head attention.
+    """
+
+    def __init__(self, attn_head_dim: int) -> None:
         super().__init__()
 
-        self.query_key_dim = query_key_dim
-        self.scale = torch.sqrt(torch.tensor(query_key_dim))
+        self.attn_head_dim = attn_head_dim
+        self.scale = torch.sqrt(torch.tensor(attn_head_dim))
 
         self.softmax = nn.Softmax(dim=3)
 
     def forward(self, query: T, key: T, value: T, mask: Optional[T] = None) -> T:
-        # query: [batch_size, num_heads, seq_length, query_key_dim]
-        #   key: [batch_size, num_heads, seq_length, query_key_dim]
-        # value: [batch_size, num_heads, seq_length, value_dim]
+        # query: [batch_size, num_q_heads, seq_length, attn_head_dim]
+        #   key: [batch_size, num_kv_heads, seq_length, attn_head_dim]
+        # value: [batch_size, num_kv_heads, seq_length, attn_head_dim]
 
         # 1. Matmul
         key_T = key.transpose(2, 3)
@@ -41,12 +48,29 @@ class ScaledDotProductAttention(nn.Module):
         # 5. Matmul
         x = torch.matmul(
             context, value
-        )  # [batch_size, num_heads, seq_length, value_dim]
+        )  # [batch_size, num_heads, seq_length, attn_head_dim]
 
         return x, context
 
 
 class MultiHeadAttention(nn.Module):
+    r"""Computes the multi-head attention given query, key, value, and an optional mask.
+
+    Args:
+        embedding_dim (int):
+            The dimension of the input embeddings.
+        attn_head_dim (int):
+            The dimension of each attention head used in the multi-head attention.
+        num_query_heads (int):
+            The number of query attention heads.
+        num_key_value_heads (int):
+            The number of key and value attention heads.
+        use_attn_linear_bias (bool):
+            Whether to use a bias in the linear layer after attention.
+
+        TODO: Implement GQA correctly
+    """
+
     def __init__(
         self,
         embedding_dim: int,
@@ -106,6 +130,27 @@ class MultiHeadAttention(nn.Module):
 
 
 class InfiniAttention(nn.Module):
+    r"""Hopefully faithful implementation of the InfiniAttention mechanism.
+
+    Read the paper: ["Leave No Context Behind: Efficient Infinite Context Transformers
+    with Infini-attention"](https://arxiv.org/abs/2404.07143)
+
+    Args:
+        embedding_dim (int):
+            The dimension of the input embeddings.
+        attn_head_dim (int):
+            The dimension of each attention head used in the multi-head attention.
+        num_query_heads (int):
+            The number of query attention heads.
+        num_key_value_heads (int):
+            The number of key and value attention heads.
+        use_attn_linear_bias (bool):
+            Whether to use a bias in the linear layer after attention.
+        use_delta_update_rule (bool):
+            Whether to use the delta update rule mentioned "Section 2.1.2 Compressive Memory Update"
+            in the paper.
+    """
+
     def __init__(
         self,
         embedding_dim: int,
@@ -175,18 +220,19 @@ class InfiniAttention(nn.Module):
         # numerator: [b n_q s a] x [b? n_kv a a] => [b n??? s a]
         # denominotor: [b n_q s e] x [b? n_kv e 1] => [b n??? s 1]
         # TODO: n??? For now, num_query_heads must be equal to num_key_value_heads otherwise this will fail
-        A_mem = torch.matmul(elu_q, self.memory) / (torch.matmul(
-            elu_q, self.z.unsqueeze(dim=-1)
-        ) + EPSILON)
+        # TODO: Implement GQA correctly
+        A_mem = torch.matmul(elu_q, self.memory) / (
+            torch.matmul(elu_q, self.z.unsqueeze(dim=-1)) + EPSILON
+        )
 
         # 2.2 Memory update
         elu_k: T = self.elu(k_proj) + 1
         elu_k_T = elu_k.transpose(2, 3)
 
         if self.use_delta_update_rule:
-            v_delta = torch.matmul(elu_k, self.memory) / (torch.matmul(
-                elu_k, self.z.unsqueeze(dim=-1)
-            ) + EPSILON)
+            v_delta = torch.matmul(elu_k, self.memory) / (
+                torch.matmul(elu_k, self.z.unsqueeze(dim=-1)) + EPSILON
+            )
             v = v_proj - v_delta
         else:
             v = v_proj

@@ -9,6 +9,44 @@ T = torch.Tensor
 
 
 class EncoderDecoderTransformer(nn.Module):
+    r"""Implements the encoder-decoder transformer architecture.
+
+    Args:
+        num_enc_layers (int):
+            The number of encoder layers in the transformer.
+        num_dec_layers (int):
+            The number of decoder layers in the transformer.
+        src_vocab_size (int):
+            The size of the source vocabulary.
+        tgt_vocab_size (int):
+            The size of the target vocabulary.
+        src_pad_idx (int):
+            The index of the padding token in the source vocabulary.
+        tgt_pad_idx (int):
+            The index of the padding token in the target vocabulary.
+        max_length (int):
+            The maximum length of the sequence.
+        embedding_dim (int):
+            The dimension of the input embeddings.
+        attn_head_dim (int):
+            The dimension of each attention head used in the multi-head attention.
+        num_query_heads (int):
+            The number of query attention heads.
+        num_key_value_heads (int):
+            The number of key and value attention heads.
+        ffn_dim (int):
+            The dimension of the hidden layer in the position-wise feed-forward network.
+        dropout_rate (float):
+            The dropout rate used in the encoder and decoder blocks between sublayers.
+        use_delta_update_rule (bool):
+            Whether to use the delta update rule mentioned "Section 2.1.2 Compressive Memory Update"
+            in the paper.
+        use_attn_linear_bias (bool):
+            Whether to use a bias in the linear layer after attention.
+        use_pffn_bias (bool):
+            Whether to use a bias in the linear layers in the position-wise feed-forward network.
+    """
+
     def __init__(
         self,
         num_enc_layers: int,

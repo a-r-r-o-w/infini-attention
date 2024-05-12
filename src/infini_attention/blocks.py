@@ -10,6 +10,17 @@ T = torch.Tensor
 
 
 class PositionwiseFFN(nn.Module):
+    r"""Implements the position-wise feed-forward network used in the encoder and decoder blocks.
+
+    Args:
+        embedding_dim (int):
+            The dimension of the input embeddings.
+        hidden_dim (int):
+            The dimension of the hidden layer in the position-wise feed-forward network.
+        use_pffn_bias (bool):
+            Whether to use a bias in the linear layers in the position-wise feed-forward network.
+    """
+
     def __init__(
         self, embedding_dim: int, hidden_dim: int, use_pffn_bias: bool = True
     ) -> None:
@@ -30,6 +41,30 @@ class PositionwiseFFN(nn.Module):
 
 
 class EncoderBlock(nn.Module):
+    r"""Implements a single encoder block in the transformer architecture.
+
+    Args:
+        embedding_dim (int):
+            The dimension of the input embeddings.
+        attn_head_dim (int):
+            The dimension of each attention head used in the multi-head attention.
+        num_query_heads (int):
+            The number of query attention heads.
+        num_key_value_heads (int):
+            The number of key and value attention heads.
+        ffn_dim (int):
+            The dimension of the hidden layer in the position-wise feed-forward network.
+        dropout_rate (float):
+            The dropout rate used in the encoder block between sublayers.
+        use_delta_update_rule (bool):
+            Whether to use the delta update rule mentioned "Section 2.1.2 Compressive Memory Update"
+            in the paper.
+        use_attn_linear_bias (bool):
+            Whether to use a bias in the linear layer after attention.
+        use_pffn_bias (bool):
+            Whether to use a bias in the linear layers in the position-wise feed-forward network.
+    """
+
     def __init__(
         self,
         embedding_dim: int,
@@ -72,6 +107,30 @@ class EncoderBlock(nn.Module):
 
 
 class DecoderBlock(nn.Module):
+    r"""Implements a single decoder block in the transformer architecture.
+
+    Args:
+        embedding_dim (int):
+            The dimension of the input embeddings.
+        attn_head_dim (int):
+            The dimension of each attention head used in the multi-head attention.
+        num_query_heads (int):
+            The number of query attention heads.
+        num_key_value_heads (int):
+            The number of key and value attention heads.
+        ffn_dim (int):
+            The dimension of the hidden layer in the position-wise feed-forward network.
+        dropout_rate (float):
+            The dropout rate used in the decoder block between sublayers.
+        use_delta_update_rule (bool):
+            Whether to use the delta update rule mentioned "Section 2.1.2 Compressive Memory Update"
+            in the paper.
+        use_attn_linear_bias (bool):
+            Whether to use a bias in the linear layer after attention.
+        use_pffn_bias (bool):
+            Whether to use a bias in the linear layers in the position-wise feed-forward network.
+    """
+
     def __init__(
         self,
         embedding_dim: int,
