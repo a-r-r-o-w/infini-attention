@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-T = torch.FloatTensor
+T = torch.Tensor
 
 
 class PositionalEncoding(nn.Module):

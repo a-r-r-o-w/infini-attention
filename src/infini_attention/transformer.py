@@ -5,10 +5,48 @@ from .positional_encoding import PositionalEncoding
 from .blocks import DecoderBlock, EncoderBlock
 
 
-T = torch.FloatTensor
+T = torch.Tensor
 
 
 class EncoderDecoderTransformer(nn.Module):
+    r"""Implements the encoder-decoder transformer architecture.
+
+    Args:
+        num_enc_layers (int):
+            The number of encoder layers in the transformer.
+        num_dec_layers (int):
+            The number of decoder layers in the transformer.
+        src_vocab_size (int):
+            The size of the source vocabulary.
+        tgt_vocab_size (int):
+            The size of the target vocabulary.
+        src_pad_idx (int):
+            The index of the padding token in the source vocabulary.
+        tgt_pad_idx (int):
+            The index of the padding token in the target vocabulary.
+        max_length (int):
+            The maximum length of the sequence.
+        embedding_dim (int):
+            The dimension of the input embeddings.
+        attn_head_dim (int):
+            The dimension of each attention head used in the multi-head attention.
+        num_query_heads (int):
+            The number of query attention heads.
+        num_key_value_heads (int):
+            The number of key and value attention heads.
+        ffn_dim (int):
+            The dimension of the hidden layer in the position-wise feed-forward network.
+        dropout_rate (float):
+            The dropout rate used in the encoder and decoder blocks between sublayers.
+        use_delta_update_rule (bool):
+            Whether to use the delta update rule mentioned "Section 2.1.2 Compressive Memory Update"
+            in the paper.
+        use_attn_linear_bias (bool):
+            Whether to use a bias in the linear layer after attention.
+        use_pffn_bias (bool):
+            Whether to use a bias in the linear layers in the position-wise feed-forward network.
+    """
+
     def __init__(
         self,
         num_enc_layers: int,
@@ -19,15 +57,13 @@ class EncoderDecoderTransformer(nn.Module):
         tgt_pad_idx: int,
         max_length: int,
         embedding_dim: int,
-        query_key_dim: int,
-        value_dim: int,
-        num_heads: int,
+        attn_head_dim: int,
+        num_query_heads: int,
+        num_key_value_heads: int,
         ffn_dim: int,
         dropout_rate: float,
-        use_query_bias: bool = False,
-        use_key_bias: bool = False,
-        use_value_bias: bool = False,
-        use_output_bias: bool = False,
+        use_delta_update_rule: bool = False,
+        use_attn_linear_bias: bool = False,
         use_pffn_bias: bool = True,
     ) -> None:
         super().__init__()
@@ -42,15 +78,13 @@ class EncoderDecoderTransformer(nn.Module):
             [
                 EncoderBlock(
                     embedding_dim,
-                    query_key_dim,
-                    value_dim,
-                    num_heads,
+                    attn_head_dim,
+                    num_query_heads,
+                    num_key_value_heads,
                     ffn_dim,
                     dropout_rate,
-                    use_query_bias,
-                    use_key_bias,
-                    use_value_bias,
-                    use_output_bias,
+                    use_delta_update_rule,
+                    use_attn_linear_bias,
                     use_pffn_bias,
                 )
                 for _ in range(num_enc_layers)
@@ -60,22 +94,20 @@ class EncoderDecoderTransformer(nn.Module):
             [
                 DecoderBlock(
                     embedding_dim,
-                    query_key_dim,
-                    value_dim,
-                    num_heads,
+                    attn_head_dim,
+                    num_query_heads,
+                    num_key_value_heads,
                     ffn_dim,
                     dropout_rate,
-                    use_query_bias,
-                    use_key_bias,
-                    use_value_bias,
-                    use_output_bias,
+                    use_delta_update_rule,
+                    use_attn_linear_bias,
                     use_pffn_bias,
                 )
                 for _ in range(num_dec_layers)
             ]
         )
 
-        self.scale = torch.sqrt(torch.tensor(embedding_dim))
+        self.scale = embedding_dim**0.5
 
     def _get_attn_mask(self, x: T, pad_idx: int) -> torch.BoolTensor:
         # [batch_size, seq_length] -> [batch_size, 1, 1, seq_length]
@@ -89,7 +121,9 @@ class EncoderDecoderTransformer(nn.Module):
         # [1 1 1 1]
         batch_size, seq_length = x.shape
         attn_mask = self._get_attn_mask(x, pad_idx)
-        causal_mask = torch.tril(torch.ones((1, seq_length, seq_length))).bool()
+        causal_mask = torch.tril(
+            torch.ones((1, seq_length, seq_length), device=x.device)
+        ).bool()
         mask = attn_mask & causal_mask
         return mask
 
@@ -107,16 +141,22 @@ class EncoderDecoderTransformer(nn.Module):
         tgt = self.pe(tgt)
 
         # 3. Encoder
+        encoder_contexts = []
         for block in self.encoders:
-            src = block(src, attn_mask)
+            src, encoder_context = block(src, attn_mask)
+            encoder_contexts.append(encoder_context)
 
         # 4. Decoder
+        decoder_contexts = []
         for block in self.decoders:
-            tgt = block(tgt, src, causal_mask, attn_mask)
+            tgt, decoder_context = block(tgt, src, causal_mask, attn_mask)
+            decoder_contexts.append(decoder_context)
 
-        return tgt
+        return tgt, encoder_contexts, decoder_contexts
 
     def clear_memory(self) -> None:
+        r"""Clears the InfiniAttention memory of the encoder and decoder blocks."""
+
         for block in self.encoders:
             block: EncoderBlock
             block.attn.memory.zero_()
@@ -128,24 +168,3 @@ class EncoderDecoderTransformer(nn.Module):
             block.attn1.z.zero_()
             block.attn2.memory.zero_()
             block.attn2.z.zero_()
-
-
-if __name__ == "__main__":
-    transformer = EncoderDecoderTransformer(
-        1, 1, 1000, 1000, 1, 1, 256, 64, 64, 64, 4, 128, 0.1
-    )
-    shape = (2, 128)
-    input_ids = torch.randint(0, 1000, shape)
-    tgt_ids = torch.randint(0, 1000, shape)
-
-    print(transformer(input_ids, tgt_ids).shape)
-
-    # for inputs, (targets_shifted or labels) in train dataloader:
-    #   optimizer zero grad
-    #   inputs_segmented, targets_segment = segment(inputs, targets, SEGMENT_LENGTH)
-    #   for (each segment in inputs_segment, target_segmented)
-    #       # run infiniattention
-    #       calculate loss per segment and backward
-    #   gradient clipping between 0 and 1
-    #   optimizer step
-    #   clear memory of infiniattention
